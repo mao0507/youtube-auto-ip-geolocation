@@ -28,7 +28,17 @@ A browser opens — log in manually (handle 2FA if prompted), then press Enter i
 npm start
 ```
 
-Schedule this via Windows Task Scheduler for unattended runs.
+Each account is retried up to 2 times on failure (login/navigation/playback issues) before being skipped; the run never aborts because of one bad account. `config.json` is validated on load — a missing/mistyped field fails fast with a clear error instead of a confusing crash later. A Telegram summary (who succeeded/failed and why) is sent at the end; if Telegram itself is unreachable, that's logged but doesn't fail the run.
+
+Schedule `npm start` via Windows Task Scheduler for unattended runs.
+
+## Project layout
+
+- `src/runAccount.ts` — core single-account flow (pick a video, confirm it's playing, watch, repeat). The seam: tested against a fake `YoutubePage`, never real YouTube.
+- `src/youtubePage.ts` — `YoutubePage` interface + the real Playwright implementation.
+- `src/main.ts` — orchestrator: iterates accounts, retries, sends the Telegram summary.
+- `src/login.ts` — one-off interactive script to save a session file per account.
+- `src/config.ts` / `src/notify.ts` — config loading+validation, Telegram formatting/sending.
 
 ## Test
 
