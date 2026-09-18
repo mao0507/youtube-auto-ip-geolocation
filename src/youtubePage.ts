@@ -15,6 +15,7 @@ export interface YoutubePage {
 
 const HOME_URL = "https://www.youtube.com/";
 const VIDEO_THUMBNAIL_SELECTOR = "ytd-rich-item-renderer a#thumbnail";
+const FEED_LOAD_TIMEOUT_MS = 15_000;
 
 export class PlaywrightYoutubePage implements YoutubePage {
   constructor(private readonly page: Page) {}
@@ -25,6 +26,11 @@ export class PlaywrightYoutubePage implements YoutubePage {
 
   async pickRandomVideo(): Promise<boolean> {
     const thumbnails = this.page.locator(VIDEO_THUMBNAIL_SELECTOR);
+    try {
+      await thumbnails.first().waitFor({ state: "attached", timeout: FEED_LOAD_TIMEOUT_MS });
+    } catch {
+      return false;
+    }
     const count = await thumbnails.count();
     if (count === 0) return false;
     const index = Math.floor(Math.random() * count);
