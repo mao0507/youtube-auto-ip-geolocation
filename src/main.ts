@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { chromium, type Browser } from "playwright";
+import { mkdirSync } from "node:fs";
 import { listAccounts, loadConfig } from "./config.js";
 import { runAccount } from "./runAccount.js";
 import { PlaywrightYoutubePage } from "./youtubePage.js";
@@ -7,6 +8,21 @@ import { formatSummary, sendTelegramMessage } from "./notify.js";
 import type { AccountConfig, AccountResult, RunConfig } from "./types.js";
 
 const MAX_ATTEMPTS = 3; // 1 initial + up to 2 retries
+
+async function saveDebugScreenshot(
+  page: import("playwright").Page,
+  alias: string,
+  attempt: number,
+): Promise<void> {
+  try {
+    mkdirSync("debug", { recursive: true });
+    const path = `debug/${alias}-attempt${attempt}.png`;
+    await page.screenshot({ path });
+    console.log(`[${alias}] saved failure screenshot to ${path}`);
+  } catch (err) {
+    console.warn(`[${alias}] could not save debug screenshot:`, err);
+  }
+}
 
 async function runAccountWithRetry(
   browser: Browser,
@@ -28,6 +44,9 @@ async function runAccountWithRetry(
         const page = await context.newPage();
         const youtubePage = new PlaywrightYoutubePage(page);
         lastResult = await runAccount(account, config, youtubePage);
+        if (lastResult.status === "failure") {
+          await saveDebugScreenshot(page, account.alias, attempt);
+        }
       } finally {
         await context.close();
       }
