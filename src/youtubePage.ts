@@ -16,6 +16,9 @@ export interface YoutubePage {
 const HOME_URL = "https://www.youtube.com/";
 const VIDEO_THUMBNAIL_SELECTOR = "ytd-rich-item-renderer a#thumbnail";
 const FEED_LOAD_TIMEOUT_MS = 15_000;
+// ponytail: feed sometimes renders empty (bot detection / slow load) — fall
+// back to a fixed known-good video instead of failing the account outright.
+const FALLBACK_VIDEO_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
 export class PlaywrightYoutubePage implements YoutubePage {
   constructor(private readonly page: Page) {}
@@ -29,13 +32,22 @@ export class PlaywrightYoutubePage implements YoutubePage {
     try {
       await thumbnails.first().waitFor({ state: "attached", timeout: FEED_LOAD_TIMEOUT_MS });
     } catch {
-      return false;
+      return this.playFallbackVideo();
     }
     const count = await thumbnails.count();
-    if (count === 0) return false;
+    if (count === 0) return this.playFallbackVideo();
     const index = Math.floor(Math.random() * count);
     await thumbnails.nth(index).click();
     return true;
+  }
+
+  private async playFallbackVideo(): Promise<boolean> {
+    try {
+      await this.goto(FALLBACK_VIDEO_URL);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async waitForPlaybackStart(timeoutMs: number): Promise<boolean> {
