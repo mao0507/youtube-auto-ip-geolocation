@@ -7,7 +7,8 @@ export interface RunConfig {
   headless: boolean;
   videosPerAccount: number;
   watchSeconds: number;
-  accounts: AccountConfig[];
+  /** Aliases (session filename minus .json) to skip even though a session file exists. */
+  skipAccounts: string[];
 }
 
 export interface AccountResult {

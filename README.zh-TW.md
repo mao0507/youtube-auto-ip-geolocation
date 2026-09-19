@@ -26,7 +26,9 @@ cp .env.example .env
 - `headless`：是否顯示瀏覽器視窗（`false` 方便偵錯，`true` 排程無人值守用）
 - `videosPerAccount`：每帳號看幾支影片
 - `watchSeconds`：每支看幾秒，預設 10
-- `accounts`：帳號清單，每筆是 `{ 代稱, session 檔路徑 }`
+- `skipAccounts`：要跳過的帳號代稱清單（見下）
+
+帳號清單**不用在這裡列**——程式會自己掃 `sessions/` 資料夾，裡面有幾個 `<代稱>.json` 就跑幾個帳號，代稱就是檔名去掉 `.json`。想暫時不跑某個帳號，不用刪 session 檔，把它的代稱加進 `skipAccounts` 就好。
 
 **4. 幫每個帳號存登入 session（每個帳號各做一次即可，之後不用再做）**
 
@@ -34,7 +36,7 @@ cp .env.example .env
 npm run login -- sessions/<帳號代稱>.json
 ```
 
-會開一個瀏覽器視窗，你自己在裡面登入（含 2FA），登入完成後回終端機按 Enter，session 就存檔到指定路徑。這個路徑要跟 `config.json` 裡該帳號的 `sessionFile` 對上。
+會開一個瀏覽器視窗，你自己在裡面登入（含 2FA），登入完成後回終端機按 Enter，session 就存到 `sessions/<帳號代稱>.json`。下次 `npm start` 就會自動抓到這個帳號，不用再改 `config.json`。
 
 **5. 執行**
 
@@ -58,7 +60,9 @@ npm start
 flowchart TD
     A[npm start] --> B[讀取並驗證 config.json]
     B -->|格式錯誤| B1[立即報錯，結束]
-    B -->|驗證通過| C[啟動一個 Chromium browser]
+    B -->|驗證通過| B2[掃 sessions/ 目錄，<br/>排除 skipAccounts]
+    B2 -->|沒找到任何 session| B3[印訊息，結束]
+    B2 -->|找到 N 個帳號| C[啟動一個 Chromium browser]
     C --> D{依序取下一個帳號}
     D -->|沒有更多帳號| Z[彙整結果]
     D --> E[用該帳號 session 開新 browser context]
@@ -92,8 +96,9 @@ flowchart TD
 **文字版步驟**：
 
 1. 讀 `config.json`，格式不對就直接報錯結束（不會跑到一半才發現）。
-2. 開一個 Chromium browser，之後所有帳號共用這一個 browser process（各帳號用獨立 context 隔離，不用每帳號重開一個 browser）。
-3. 依序處理每個帳號（不加延遲，跑完一個馬上跑下一個）：
+2. 掃 `sessions/` 資料夾，每個 `<代稱>.json` 就是一個帳號，扣掉 `skipAccounts` 裡列的代稱。一個都沒有就印訊息直接結束。
+3. 開一個 Chromium browser，之後所有帳號共用這一個 browser process（各帳號用獨立 context 隔離，不用每帳號重開一個 browser）。
+4. 依序處理每個帳號（不加延遲，跑完一個馬上跑下一個）：
    1. 用該帳號的 session 檔開一個新的 browser context + page。
    2. 進 YouTube 首頁/訂閱 feed，等待推薦影片縮圖出現。
    3. 隨機點一支影片。
@@ -101,8 +106,8 @@ flowchart TD
    5. 依 `videosPerAccount` 設定重複步驟 ii–iv。
    6. 全部看完視為該帳號成功；中途任何一步失敗（找不到影片、播放沒啟動、session 失效等）視為該帳號本輪失敗。
    7. 若失敗，關掉這次的 context，整個流程重來（reuse 同一個 browser），最多重試到第 3 次嘗試；仍失敗就放棄該帳號、記下失敗原因，繼續下一個帳號。
-4. 全部帳號跑完，關閉 browser，把每個帳號的成功/失敗狀況組成一段文字摘要，印在終端機。
-5. 若 `.env` 有設 `TELEGRAM_BOT_TOKEN` 跟 `TELEGRAM_CHAT_ID`，把摘要發到 Telegram；沒設就印警告略過；發送失敗只記錯誤，不影響程式的結束狀態。
+5. 全部帳號跑完，關閉 browser，把每個帳號的成功/失敗狀況組成一段文字摘要，印在終端機。
+6. 若 `.env` 有設 `TELEGRAM_BOT_TOKEN` 跟 `TELEGRAM_CHAT_ID`，把摘要發到 Telegram；沒設就印警告略過；發送失敗只記錯誤，不影響程式的結束狀態。
 
 ## 專案結構
 

@@ -2,7 +2,5 @@
   "headless": true,
   "videosPerAccount": 1,
   "watchSeconds": 10,
-  "accounts": [
-    { "alias": "account-1", "sessionFile": "sessions/account-1.json" }
-  ]
+  "skipAccounts": []
 }

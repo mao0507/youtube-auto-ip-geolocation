@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { chromium, type Browser } from "playwright";
-import { loadConfig } from "./config.js";
+import { listAccounts, loadConfig } from "./config.js";
 import { runAccount } from "./runAccount.js";
 import { PlaywrightYoutubePage } from "./youtubePage.js";
 import { formatSummary, sendTelegramMessage } from "./notify.js";
@@ -52,11 +52,18 @@ async function runAccountWithRetry(
 
 async function main() {
   const config = loadConfig();
+  const accounts = listAccounts("sessions", config.skipAccounts);
+  if (accounts.length === 0) {
+    console.log('No session files found under "sessions/" — run "npm run login -- sessions/<alias>.json" first.');
+    return;
+  }
+  console.log(`Found ${accounts.length} account(s): ${accounts.map((a) => a.alias).join(", ")}`);
+
   const results: AccountResult[] = [];
 
   const browser = await chromium.launch({ headless: config.headless });
   try {
-    for (const account of config.accounts) {
+    for (const account of accounts) {
       const result = await runAccountWithRetry(browser, account, config);
       results.push(result);
     }

@@ -14,15 +14,15 @@ npx playwright install chromium
 cp .env.example .env   # fill in TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID
 ```
 
-Edit `config.json`: set `headless`, `videosPerAccount`, `watchSeconds`, and the `accounts` list (alias + session file path).
+Edit `config.json`: set `headless`, `videosPerAccount`, `watchSeconds`, and (optionally) `skipAccounts`.
 
-For each account, save a login session once:
+You don't list accounts in `config.json` — the script scans `sessions/` and runs one account per `<alias>.json` file it finds there. To save a login session for an account:
 
 ```bash
 npm run login -- sessions/<alias>.json
 ```
 
-A browser opens — log in manually (handle 2FA if prompted), then press Enter in the terminal to save the session.
+A browser opens — log in manually (handle 2FA if prompted), then press Enter in the terminal to save the session to `sessions/<alias>.json`. `npm start` will pick it up automatically next run. To temporarily exclude an account without deleting its session file, add its alias to `skipAccounts` in `config.json`.
 
 ## Run
 
