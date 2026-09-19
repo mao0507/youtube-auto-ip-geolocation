@@ -4,3 +4,4 @@ sessions/
 debug/
 .env
 *.log
+bash.exe.stackdump
