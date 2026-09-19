@@ -10,7 +10,15 @@ if (!sessionFile) {
 }
 
 async function main() {
-  const browser = await chromium.launch({ headless: false });
+  // Google blocks OAuth-style sign-in from a browser it detects as
+  // automation-driven ("This browser may be insecure"). Launching the
+  // user's real installed Chrome instead of the bundled Chromium, with
+  // the automation flag hidden, avoids that block.
+  const browser = await chromium.launch({
+    headless: false,
+    channel: "chrome",
+    args: ["--disable-blink-features=AutomationControlled"],
+  });
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto("https://accounts.google.com/");
