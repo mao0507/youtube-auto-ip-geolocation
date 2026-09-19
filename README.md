@@ -1,5 +1,7 @@
 # youtube-auto-ip-geolocation
 
+中文版說明請見 [README.zh-TW.md](./README.zh-TW.md)。
+
 Personal automation: logs into your own Google accounts (via saved sessions) and watches a random recommended YouTube video for ~10 seconds per account, on a schedule. See `TICKET.md` and [issue #1](https://github.com/mao0507/youtube-auto-ip-geolocation/issues/1) for the full spec.
 
 Not for inflating view counts or manipulating anyone else's content — personal-account habit automation only.
