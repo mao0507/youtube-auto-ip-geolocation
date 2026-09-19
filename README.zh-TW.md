@@ -4,25 +4,39 @@
 
 **用途聲明**：純粹是個人帳號的自動化習慣，不是用來刷觀看數或影響他人頻道數據。
 
-## 安裝
+## 使用步驟（照順序做）
+
+**1. 裝依賴**
 
 ```bash
 npm install
 npx playwright install chromium
-cp .env.example .env   # 填入 TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID
 ```
 
-編輯 `config.json`：設定 `headless`（是否顯示瀏覽器視窗）、`videosPerAccount`（每帳號觀看幾支影片）、`watchSeconds`（每支看幾秒，預設 10）、`accounts`（帳號清單，每筆是代稱 + session 檔路徑）。
+**2. 設定 Telegram 通知（選填，但建議填）**
 
-每個帳號要先手動登入一次、存下 session：
+```bash
+cp .env.example .env
+```
+
+編輯 `.env`，填入 `TELEGRAM_BOT_TOKEN` 跟 `TELEGRAM_CHAT_ID`。不填也能跑，只是跑完不會收到通知（程式會印警告後略過，不會報錯）。
+
+**3. 設定 `config.json`**
+
+- `headless`：是否顯示瀏覽器視窗（`false` 方便偵錯，`true` 排程無人值守用）
+- `videosPerAccount`：每帳號看幾支影片
+- `watchSeconds`：每支看幾秒，預設 10
+- `accounts`：帳號清單，每筆是 `{ 代稱, session 檔路徑 }`
+
+**4. 幫每個帳號存登入 session（每個帳號各做一次即可，之後不用再做）**
 
 ```bash
 npm run login -- sessions/<帳號代稱>.json
 ```
 
-指令會開一個瀏覽器視窗，你自己在裡面登入（含 2FA），登入完成後回終端機按 Enter，session 就會存檔。
+會開一個瀏覽器視窗，你自己在裡面登入（含 2FA），登入完成後回終端機按 Enter，session 就存檔到指定路徑。這個路徑要跟 `config.json` 裡該帳號的 `sessionFile` 對上。
 
-## 執行
+**5. 執行**
 
 ```bash
 npm start
@@ -32,9 +46,13 @@ npm start
 - 啟動時會先驗證 `config.json` 格式，欄位缺漏或型別錯會立刻報清楚的錯誤，不會等到跑到一半才炸。
 - 全部帳號跑完後，會用 Telegram 發一則總結（哪些成功、哪些失敗與原因）。若 Telegram 本身連不上，只會記錄錯誤，不會讓整個執行判定失敗。
 
-要無人值守定時執行，把 `npm start` 排進 Windows 工作排程器。
+**6. （選用）排程無人值守執行**
 
-## 執行流程
+把 `npm start` 排進 Windows 工作排程器，定時自動跑。前面 1–4 步都是一次性設定，排程只需要重複跑第 5 步。
+
+## 程式內部執行邏輯
+
+以下是 `npm start` 之後，程式本身怎麼跑，不是使用者要做的操作。
 
 ```mermaid
 flowchart TD
