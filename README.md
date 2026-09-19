@@ -32,6 +32,10 @@ npm start
 
 Each account is retried up to 2 times on failure (login/navigation/playback issues) before being skipped; the run never aborts because of one bad account. `config.json` is validated on load — a missing/mistyped field fails fast with a clear error instead of a confusing crash later. A Telegram summary (who succeeded/failed and why) is sent at the end; if Telegram itself is unreachable, that's logged but doesn't fail the run.
 
+If the recommendation feed fails to load within 15s (slow network, bot detection, region quirks), the script falls back to a fixed known-good video instead of failing the account. Any failed attempt also saves a screenshot to `debug/<alias>-attempt<N>.png` so you can see what the page looked like.
+
+Set `headless: false` in `config.json` to watch the browser window while it runs (useful for debugging); `true` for unattended runs.
+
 Schedule `npm start` via Windows Task Scheduler for unattended runs.
 
 ## Project layout
